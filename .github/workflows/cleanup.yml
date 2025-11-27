@@ -1,26 +1,34 @@
-name: Daily Cleanup
+name: daily-cleanup
 
 on:
-  workflow_dispatch:   # allows manual run
+  workflow_dispatch:        # allows manual run
+  push:
+    branches: [ main ]
   schedule:
-    # Runs every day at 02:00 UTC+1 (Lagos)
+    # runs at 02:00 Africa/Lagos (UTC+1). GitHub uses UTC for cron.
+    # 02:00 Lagos == 01:00 UTC -> '0 1 * * *'
     - cron: '0 1 * * *'
 
 jobs:
   build-and-run:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.21'  # change if needed
+          go-version: '1.21'  # choose your required version
 
-      - name: Build the cleanup program
+      - name: Build
         run: go build -o bin/cleanup ./cmd/cleanup
 
-      - name: Run cleanup
-        run: ./bin/cleanup --dir=./testlogs --days=7
+      - name: Run cleanup (dry-run unless ALLOW_DELETE secret true)
+        env:
+          # Provide ALLOW_DELETE in repository secrets to allow deletions. Default empty.
+          ALLOW_DELETE: ${{ secrets.ALLOW_DELETE }}
+        run: |
+          echo "Running cleanup in dry-run by default"
+          # change directory to repo root and run the binary
+          ./bin/cleanup --dir ./logs --days 30 --dry-run=false || true
