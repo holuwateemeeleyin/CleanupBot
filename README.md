@@ -1,4 +1,4 @@
-# cleanup-go
+# cleanupBot Doc
 
 Small Go utility to find and delete files older than X days.
 
